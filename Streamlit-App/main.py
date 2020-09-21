@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from sklearn.feature_extraction.text import CountVectorizer
+import tensorflow as tf
 
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -25,7 +26,8 @@ The original data: Covid-19 tweets related:
 #Shape and head:
 st.write('Shape of train dataset:', train.shape)
 st.write('Shape of test set:', test.shape)
-st.write('Quick overview of the data:', train.head())
+st.write('Quick overview of the data:')
+st.table(train.head())
 
 #Select the model=
 selected_NN = st.sidebar.selectbox("Select the Neural Network", ('Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 
@@ -44,8 +46,20 @@ y_train = pd.get_dummies(train.Sentiment).values
 y_test = pd.get_dummies(test.Sentiment).values
 
 model_simple = Sequential()
-model_simple.add(Dense(30, input_dim = X_train.shape[1], activation = 'relu'))
-model_simple.add(Dense(5, activation = 'softmax'))
+model_simple.add(Dense(30, input_dim = X_train.shape[1], activation = 'relu', name = 'Input_Dense_30'))
+model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_First'))
+model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_Second'))
+model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_Fourth'))
+model_simple.add(Dense(5, activation = 'softmax', name = 'Output_5'))
 model_simple.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
 
-st.sidebar.write("Summary of the model:", model_simple.summary())
+# stringlist = []
+# model_simple.summary(print_fn=lambda x: stringlist.append(x))
+# short_model_summary = "\n".join(stringlist)
+
+layer_names=[layer.name for layer in model_simple.layers]
+
+
+st.sidebar.write("Summary of the model:", layer_names)
+model = tf.keras.utils.plot_model(model_simple, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+st.sidebar.image('model_plot.png', use_column_width = True)
