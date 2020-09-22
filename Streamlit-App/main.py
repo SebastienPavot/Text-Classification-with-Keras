@@ -31,7 +31,7 @@ st.table(train.head())
 
 #Select the model=
 selected_NN = st.sidebar.selectbox("Select the Neural Network", ('Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 
-                            'CNN Multi layers model'))
+                                    'CNN Multi layers model'))
 
 train_text = train.OriginalTweet.values
 test_text = test.OriginalTweet.values
@@ -53,13 +53,12 @@ model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_Fourth'))
 model_simple.add(Dense(5, activation = 'softmax', name = 'Output_5'))
 model_simple.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
 
-# stringlist = []
-# model_simple.summary(print_fn=lambda x: stringlist.append(x))
-# short_model_summary = "\n".join(stringlist)
-
-layer_names=[layer.name for layer in model_simple.layers]
+def model_plotted():
+    x = 1
 
 
-model = tf.keras.utils.plot_model(model_simple, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+
+
+model = tf.keras.utils.plot_model(model_plotted, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
 st.sidebar.write('Summary of the model:')
 st.sidebar.image('model_plot.png', use_column_width = True)
