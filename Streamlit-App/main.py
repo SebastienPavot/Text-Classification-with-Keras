@@ -60,6 +60,6 @@ model_simple.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metr
 layer_names=[layer.name for layer in model_simple.layers]
 
 
-st.sidebar.write("Summary of the model:", layer_names)
 model = tf.keras.utils.plot_model(model_simple, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+st.sidebar.write('Summary of the model:')
 st.sidebar.image('model_plot.png', use_column_width = True)
