@@ -6,54 +6,72 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from sklearn.feature_extraction.text import CountVectorizer
 import tensorflow as tf
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from sklearn.metrics import confusion_matrix
 
-
+#Options
 st.set_option('deprecation.showPyplotGlobalUse', False)
+st.beta_set_page_config(
+	layout="wide",  # Can be "centered" or "wide". In the future also "dashboard", etc.
+	initial_sidebar_state="auto",  # Can be "auto", "expanded", "collapsed"
+	page_title="Text Classification SPavot",  # String or None. Strings get appended with "• Streamlit". 
+	page_icon="😷",  # String, anything supported by st.image, or None.
+)
 
 #Data importation
-train = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualization/Data/Corona_NLP_train.csv', encoding = 'latin')
-test = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualization/Data/Corona_NLP_test.csv', encoding ='latin')
+train = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualization/Data/train_cleaned.csv')
+test = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualization/Data/test_cleaned.csv')
 
 #Title
 st.title('Text classification with Keras')
 
 #Overview of the dataset:
 st.write("""
-The original data: Covid-19 tweets related:
+The original data: Covid-19 tweets related
 """)
 
 #Shape and head:
 st.write('Shape of train dataset:', train.shape)
 st.write('Shape of test set:', test.shape)
-st.write('Quick overview of the data:')
-st.table(train.head())
 
 #Select the model=
 selected_NN = st.sidebar.selectbox("Select the Neural Network", ('Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 
                                     'CNN Multi layers model'))
 
+#Get the values of the input & targets
 train_text = train.OriginalTweet.values
 test_text = test.OriginalTweet.values
-
-vectorizer = CountVectorizer()
-vectorizer.fit(train_text)
-
-#Create training / test set:
-X_train = vectorizer.transform(train_text)
-X_test  = vectorizer.transform(test_text)
+#Dummy encode the target
 y_train = pd.get_dummies(train.Sentiment).values
 y_test = pd.get_dummies(test.Sentiment).values
 
-model_simple = Sequential()
-model_simple.add(Dense(30, input_dim = X_train.shape[1], activation = 'relu', name = 'Input_Dense_30'))
-model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_First'))
-model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_Second'))
-model_simple.add(Dense(30, activation = 'relu', name = 'Dense_30_Fourth'))
-model_simple.add(Dense(5, activation = 'softmax', name = 'Output_5'))
-model_simple.compile(loss = 'categorical_crossentropy', optimizer = 'adam', metrics = ['accuracy'])
+def set_training_tests(selected_NN):
+    #Input data regarding the model selected
+    if selected_NN == 'Simple NN' or selected_NN == 'Multi layers NN':
+        #Initiate vectorizer:
+        vectorizer = CountVectorizer()
+        vectorizer.fit(train_text)
+        #Create training / test set:
+        X_train = vectorizer.transform(train_text)
+        X_test  = vectorizer.transform(test_text)
+    else:
+        #Embbeding using tokenizer
+        tokenizer = Tokenizer(num_words = 10000)
+        tokenizer.fit_on_texts(train_text)
+        #Fit the tokenizet to the data
+        X_train = tokenizer.texts_to_sequences(train_text)
+        X_test = tokenizer.texts_to_sequences(test_text)
+        vocab_size = len(tokenizer.word_index)+1
+        #Pad the text
+        maxlen = 30
+        X_train = pad_sequences(X_train, padding='post', maxlen=maxlen)
+        X_test = pad_sequences(X_test, padding='post', maxlen=maxlen)
+    return X_train, X_test
 
 #Get the model selected:
 def get_model(selected_NN):
@@ -89,11 +107,65 @@ def get_history(selected_NN):
         history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/conv_history.npy', allow_pickle = 'TRUE').item()
     return history
 
+
+#Plot part:
+
+#Accuracy and loss plots:
+#Get the history
 history = get_history(selected_NN)
-
+#Initiate an array of range of number of epochs
 test = np.arange(1, len(history['accuracy'])+1)
-fig = go.Figure(data = go.Scatter(x = test, y = history['accuracy']))
+
+#Loss plot
+fig = go.Figure()
+fig.add_trace(go.Scatter(name = 'Training set', x = test, y = history['loss']))
+fig.add_trace(go.Scatter(name = 'Test set', x = test, y = history['val_loss']))
+fig.update_layout(
+    title="Training & Validation loss evolution",
+    xaxis_title="Epochs",
+    yaxis_title="Loss",
+    legend_title="Train & Test sets performance",
+    width = 1250)
 st.plotly_chart(fig)
 
-fig = go.Figure(data = go.Scatter(x = test, y = history['val_accuracy']))
+# Accuracy plot
+fig = go.Figure()
+fig.add_trace(go.Scatter(name = 'Training set', x = test, y = history['accuracy']))
+fig.add_trace(go.Scatter(name = 'Test set', x = test, y = history['val_accuracy']))
+fig.update_layout(
+    title="Training & Validation accuracy evolution",
+    xaxis_title="Epochs",
+    yaxis_title="Accuracy",
+    legend_title="Train & Test sets performance",
+    width = 1250)
 st.plotly_chart(fig)
+
+#Confusion matrix plot:
+#Get X_train, X_test
+X_train, X_test = set_training_tests(selected_NN)
+#Initate the label of our target:
+CATEGORIES = ["Neutral", "Positive", "Extremely Negative", 'Negative', 'Extremely Positive']
+#Get the prediction of the model on the test set:
+prediction = model.predict(X_test)
+#Get one for the highest prediction, else 0:
+for i in range(0,len(prediction)):
+    for y in range(0,5):
+        if prediction[i][y] == max(prediction[i]):
+            prediction[i][y] = 1
+        else:
+            prediction[i][y] = 0
+
+#Compute the confusion matrix:
+conf_mat = confusion_matrix(y_test.argmax(axis=1), prediction.argmax(axis=1))
+#Plot it:
+plt.figure(figsize=(25,7))
+sns.heatmap(conf_mat, annot=True, fmt='d',
+            xticklabels=CATEGORIES, yticklabels=CATEGORIES)
+plt.ylabel('Actual', fontsize=15)
+plt.xlabel('Predicted', fontsize=15)
+plt.title('Confusion matrix of the predictions on the test set:', fontsize=20)
+st.pyplot()
+
+#Prediction of user inputted data:
+user_input = st.text_input("Challenge the model, input your own tweet!", 'Try it yourself :)')
+st.write("The model think that it is a GOOD tweet")
