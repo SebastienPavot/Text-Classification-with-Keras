@@ -43,7 +43,7 @@ st.write('Shape of test set:', test.shape)
 selected_NN = st.sidebar.selectbox("Select the Neural Network", ('Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 
                                     'CNN Multi layers model'))
 
-#Get the values of the input & targets
+#Get the values of the input
 train_text = train.OriginalTweet.values
 test_text = test.OriginalTweet.values
 #Dummy encode the target
@@ -53,26 +53,22 @@ y_test = pd.get_dummies(test.Sentiment).values
 CATEGORIES = ["Neutral", "Positive", "Extremely Negative", 'Negative', 'Extremely Positive']
 #Initiate maxlen for vocab:
 maxlen = 30
-
+#Initiate vectorizer and tokenizer regardng the model selected:
 vectorizer = CountVectorizer()
 vectorizer.fit(train_text)
 tokenizer = Tokenizer(num_words = 10000)
 tokenizer.fit_on_texts(train_text)
 
+#Functions part:
 
+#Get the training and test sets in the shape of the models needs:
 def set_training_tests(selected_NN):
     #Input data regarding the model selected
     if selected_NN == 'Simple NN' or selected_NN == 'Multi layers NN':
-        #Initiate vectorizer:
-        vectorizer = CountVectorizer()
-        vectorizer.fit(train_text)
         #Create training / test set:
         X_train = vectorizer.transform(train_text)
         X_test  = vectorizer.transform(test_text)
     else:
-        #Embbeding using tokenizer
-        tokenizer = Tokenizer(num_words = 10000)
-        tokenizer.fit_on_texts(train_text)
         #Fit the tokenizet to the data
         X_train = tokenizer.texts_to_sequences(train_text)
         X_test = tokenizer.texts_to_sequences(test_text)
@@ -96,11 +92,27 @@ def get_model(selected_NN):
         model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_Conv')
     return model
 
-#Plot the model selected
-model = get_model(selected_NN)
-tf.keras.utils.plot_model(model, to_file='/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', show_shapes=True, show_layer_names=True)
-st.sidebar.write('Summary of the model:')
-st.sidebar.image('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', use_column_width = True)
+#Definition of the model selected:
+simple = 'It is a simple one layer model without any specifics optimizations'
+multi = 'Simple model but deeper with 3 layers'
+Embbed = 'We applied word embedding and add an embedded layer'
+Max_pool = 'Using word embedding, this time we add a max layers to avoid the overfitting'
+Conv = 'This model uses word embedding with one convulotionnal layer'
+
+#Function to assign description regarding the selected model:
+def model_description(selected_NN):
+    if selected_NN == 'Simple NN':
+        description = simple
+    elif selected_NN == 'Multi layers NN':
+        description = multi
+    elif selected_NN == 'Embedded Multi layers NN':
+        description = Embbed
+    elif selected_NN == 'Embbed Max pool Multi Layers NN':
+        description = Max_pool
+    elif selected_NN == 'CNN Multi layers model':
+        description = Conv
+    return description
+
 
 #Get the history of the model selected:
 def get_history(selected_NN):
@@ -118,18 +130,32 @@ def get_history(selected_NN):
 
 #Return the prediction based on the input and the model selected
 def prediction_input_user(user_input):
+    #Transform the input into a numpy array
     user_input = [user_input]
     user_input = np.array(user_input)
+    #Transform the array in the shape the model selected need:
     if selected_NN == 'Simple NN' or selected_NN == 'Multi layers NN':
         user_input = vectorizer.transform(user_input)
     else:
         user_input = tokenizer.texts_to_sequences(user_input)
         user_input = pad_sequences(user_input, padding='post', maxlen=maxlen)
+    #Predict using the model selected
     prediction = model.predict(user_input)
+    #Return the label predicted
     pred_name = CATEGORIES[np.argmax(prediction)]
     return pred_name
 
-#Plot part:
+#Design part:
+
+#Plot the model selected
+model = get_model(selected_NN)
+tf.keras.utils.plot_model(model, to_file='/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', show_shapes=True, show_layer_names=True)
+st.sidebar.write('Summary of the model:')
+st.sidebar.image('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', use_column_width = True)
+
+#Assignt the description of the model selected
+description = model_description(selected_NN)
+st.sidebar.write('Model description:', description)
 
 #Accuracy and loss plots:
 #Get the history
@@ -189,3 +215,6 @@ st.pyplot()
 user_input = st.text_input("Challenge the model, input your own tweet!", 'Try it yourself :)')
 pred_name = prediction_input_user(user_input)
 st.write("The model think that it is:", pred_name)
+
+#Credit and social link:s
+st.sidebar.write('Made by Sébastien PAVOT: https://github.com/SebastienPavot')
