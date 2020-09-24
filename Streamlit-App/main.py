@@ -116,6 +116,7 @@ def get_history(selected_NN):
         history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/conv_history.npy', allow_pickle = 'TRUE').item()
     return history
 
+#Return the prediction based on the input and the model selected
 def prediction_input_user(user_input):
     user_input = [user_input]
     user_input = np.array(user_input)
