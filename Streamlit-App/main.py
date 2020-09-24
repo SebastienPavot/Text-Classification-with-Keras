@@ -49,6 +49,16 @@ test_text = test.OriginalTweet.values
 #Dummy encode the target
 y_train = pd.get_dummies(train.Sentiment).values
 y_test = pd.get_dummies(test.Sentiment).values
+#Initate the label of our target:
+CATEGORIES = ["Neutral", "Positive", "Extremely Negative", 'Negative', 'Extremely Positive']
+#Initiate maxlen for vocab:
+maxlen = 30
+
+vectorizer = CountVectorizer()
+vectorizer.fit(train_text)
+tokenizer = Tokenizer(num_words = 10000)
+tokenizer.fit_on_texts(train_text)
+
 
 def set_training_tests(selected_NN):
     #Input data regarding the model selected
@@ -68,7 +78,6 @@ def set_training_tests(selected_NN):
         X_test = tokenizer.texts_to_sequences(test_text)
         vocab_size = len(tokenizer.word_index)+1
         #Pad the text
-        maxlen = 30
         X_train = pad_sequences(X_train, padding='post', maxlen=maxlen)
         X_test = pad_sequences(X_test, padding='post', maxlen=maxlen)
     return X_train, X_test
@@ -107,6 +116,17 @@ def get_history(selected_NN):
         history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/conv_history.npy', allow_pickle = 'TRUE').item()
     return history
 
+def prediction_input_user(user_input):
+    user_input = [user_input]
+    user_input = np.array(user_input)
+    if selected_NN == 'Simple NN' or selected_NN == 'Multi layers NN':
+        user_input = vectorizer.transform(user_input)
+    else:
+        user_input = tokenizer.texts_to_sequences(user_input)
+        user_input = pad_sequences(user_input, padding='post', maxlen=maxlen)
+    prediction = model.predict(user_input)
+    pred_name = CATEGORIES[np.argmax(prediction)]
+    return pred_name
 
 #Plot part:
 
@@ -143,8 +163,6 @@ st.plotly_chart(fig)
 #Confusion matrix plot:
 #Get X_train, X_test
 X_train, X_test = set_training_tests(selected_NN)
-#Initate the label of our target:
-CATEGORIES = ["Neutral", "Positive", "Extremely Negative", 'Negative', 'Extremely Positive']
 #Get the prediction of the model on the test set:
 prediction = model.predict(X_test)
 #Get one for the highest prediction, else 0:
@@ -168,4 +186,5 @@ st.pyplot()
 
 #Prediction of user inputted data:
 user_input = st.text_input("Challenge the model, input your own tweet!", 'Try it yourself :)')
-st.write("The model think that it is a GOOD tweet")
+pred_name = prediction_input_user(user_input)
+st.write("The model think that it is:", pred_name)
