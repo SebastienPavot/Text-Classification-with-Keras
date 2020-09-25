@@ -58,6 +58,8 @@ vectorizer = CountVectorizer()
 vectorizer.fit(train_text)
 tokenizer = Tokenizer(num_words = 10000)
 tokenizer.fit_on_texts(train_text)
+#Initiate the name of the models into an array:
+models_name = ['Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 'CNN Multi layers model']
 
 #Functions part:
 
@@ -218,3 +220,20 @@ st.write("The model think that it is:", pred_name)
 
 #Credit and social link:s
 st.sidebar.write('Made by Sébastien PAVOT: https://github.com/SebastienPavot')
+
+#Allow the possibility to see predictions of the others models:
+Others_Pred =  st.checkbox('See what other models think:')
+
+#If the checkbox is ticked:
+if Others_Pred:
+    Model_Name = []
+    Models_Prediction = []
+    #For each model, we predct using the prediction function we created before and append the prediction / model name to an array
+    for i in models_name:
+        Model_Name.append(i)
+        Models_Prediction.append(prediction_input_user(user_input))
+    #Transform the arrays into dataframe
+    Predictions_All = pd.DataFrame(Model_Name, columns=['Model Name'])
+    Predictions_All['Prediction'] = Models_Prediction
+    #Output the dataframe
+    st.write('What does the others think 🤔', Predictions_All)
