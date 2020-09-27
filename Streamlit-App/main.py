@@ -13,6 +13,11 @@ import tensorflow as tf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from sklearn.metrics import confusion_matrix
+import nltk
+from nltk.corpus import stopwords
+nltk.download('stopwords')
+
+stop_words = set(stopwords.words('english'))
 
 #Options
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -40,8 +45,8 @@ st.write('Shape of train dataset:', train.shape)
 st.write('Shape of test set:', test.shape)
 
 #Select the model=
-selected_NN = st.sidebar.selectbox("Select the Neural Network", ('Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 
-                                    'CNN Multi layers model'))
+selected_NN = st.sidebar.selectbox("Select the Neural Network", ('CountVectorizer One layer Model', 'CountVectorizer Multi layers Model', 'Embedding One layer Model', 'Embedding Multi layers Model', 
+                                    'Embedding Glove One layer Model', 'Embedding Glove Multi layers Model', 'Convolutional Model', 'Convolutional Glove Model'))
 
 #Get the values of the input
 train_text = train.OriginalTweet.values
@@ -50,7 +55,7 @@ test_text = test.OriginalTweet.values
 y_train = pd.get_dummies(train.Sentiment).values
 y_test = pd.get_dummies(test.Sentiment).values
 #Initate the label of our target:
-CATEGORIES = ["Neutral", "Positive", "Extremely Negative", 'Negative', 'Extremely Positive']
+CATEGORIES = ["Neutral", "Positive", 'Negative']
 #Initiate maxlen for vocab:
 maxlen = 30
 #Initiate vectorizer and tokenizer regardng the model selected:
@@ -59,14 +64,15 @@ vectorizer.fit(train_text)
 tokenizer = Tokenizer(num_words = 10000)
 tokenizer.fit_on_texts(train_text)
 #Initiate the name of the models into an array:
-models_name = ['Simple NN', 'Multi layers NN', 'Embedded Multi layers NN', 'Embbed Max pool Multi Layers NN', 'CNN Multi layers model']
+models_name = ['CountVectorizer One layer Model', 'CountVectorizer Multi layers Model', 'Embedding One layer Model', 'Embedding Multi layers Model', 
+                                    'Embedding Glove One layer Model', 'Embedding Glove Multi layers Model', 'Convolutional Model', 'Convolutional Glove Model']
 
 #Functions part:
 
 #Get the training and test sets in the shape of the models needs:
 def set_training_tests(selected_NN):
     #Input data regarding the model selected
-    if selected_NN == 'Simple NN' or selected_NN == 'Multi layers NN':
+    if selected_NN == 'CountVectorizer One layer Model' or selected_NN == 'CountVectorizer Multi layers Model':
         #Create training / test set:
         X_train = vectorizer.transform(train_text)
         X_test  = vectorizer.transform(test_text)
@@ -80,63 +86,66 @@ def set_training_tests(selected_NN):
         X_test = pad_sequences(X_test, padding='post', maxlen=maxlen)
     return X_train, X_test
 
-#Get the model selected:
+#Get the model selected, history related and the description:
 def get_model(selected_NN):
-    if selected_NN == 'Simple NN':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/Simple_model')
-    elif selected_NN == 'Multi layers NN':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/Multi_model')
-    elif selected_NN == 'Embedded Multi layers NN':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/Multi_model_Embbeded')
-    elif selected_NN == 'Embbed Max pool Multi Layers NN':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/multi_model_Embed_Max')
-    elif selected_NN == 'CNN Multi layers model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_Conv')
-    return model
+    if selected_NN == 'CountVectorizer One layer Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/Simple_model_Count.h5')
+        description = 'One layer model using CountVectorizer to encode the text.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_simple_count.npy', allow_pickle = 'TRUE').item()
 
-#Definition of the model selected:
-simple = 'It is a simple one layer model without any specifics optimizations'
-multi = 'Simple model but deeper with 3 layers'
-Embbed = 'We applied word embedding and add an embedded layer'
-Max_pool = 'Using word embedding, this time we add a max layers to avoid the overfitting'
-Conv = 'This model uses word embedding with one convulotionnal layer'
+    elif selected_NN == 'CountVectorizer Multi layers Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_multi_count.h5')
+        description = 'Multi layers model using CountVectorizer to encode the text.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_multi_count.npy', allow_pickle = 'TRUE').item()
 
-#Function to assign description regarding the selected model:
-def model_description(selected_NN):
-    if selected_NN == 'Simple NN':
-        description = simple
-    elif selected_NN == 'Multi layers NN':
-        description = multi
-    elif selected_NN == 'Embedded Multi layers NN':
-        description = Embbed
-    elif selected_NN == 'Embbed Max pool Multi Layers NN':
-        description = Max_pool
-    elif selected_NN == 'CNN Multi layers model':
-        description = Conv
-    return description
+    elif selected_NN == 'Embedding One layer Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_simple_embed.h5')
+        description = 'One layer model using an embedding layer, tokenizer and pad sequences from Keras.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_simple_embed.npy', allow_pickle = 'TRUE').item()
 
+    elif selected_NN == 'Embedding Multi layers Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/multi_model_Embed.h5')
+        description = 'Multi layers model using an embedding layer, tokenizer and pad sequences from Keras.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_multi_Embed.npy', allow_pickle = 'TRUE').item()
 
-#Get the history of the model selected:
-def get_history(selected_NN):
-    if selected_NN == 'Simple NN':
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/simple_model_history.npy', allow_pickle = 'TRUE').item()
-    elif selected_NN == 'Multi layers NN':
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/multi_history.npy', allow_pickle = 'TRUE').item()
-    elif selected_NN == 'Embedded Multi layers NN':
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/multi_embed_history.npy', allow_pickle = 'TRUE').item()
-    elif selected_NN == 'Embbed Max pool Multi Layers NN':
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/multi_embed_max_history.npy', allow_pickle = 'TRUE').item()
-    elif selected_NN == 'CNN Multi layers model':
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/conv_history.npy', allow_pickle = 'TRUE').item()
-    return history
+    elif selected_NN == 'Embedding Glove One layer Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_simple_glove.h5')
+        description = 'One layer model using an embedding layer with Glove dictionnary as weights, tokenizer and pad sequences from Keras.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_simple_glove.npy', allow_pickle = 'TRUE').item()
+
+    elif selected_NN == 'Embedding Glove Multi layers Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_multi_glove.h5')
+        description = 'Multi layers model using an embedding layer with Glove dictionnary as weights, tokenizer and pad sequences from Keras.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_Multi_glove.npy', allow_pickle = 'TRUE').item()
+
+    elif selected_NN == 'Convolutional Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_Conv.h5')
+        description = 'Convolutional model using embedding layer and convolutional layer.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_Conv.npy', allow_pickle = 'TRUE').item()
+
+    elif selected_NN == 'Convolutional Glove Model':
+        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/NN_Models/model_Conv_glove.h5')
+        description = 'Convolutional model using embedding layer with Glove dictionnary as weights and convolutional layer.'
+        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_Conv_glove.npy', allow_pickle = 'TRUE').item()
+
+    return model, description, history
+
+def clean_user_input(user_input):
+    user_input_cleaned = user_input.lower()
+    #user_input_cleaned = user_input_cleaned.replace('http\S+|www.\S+', '', case=True)
+    user_input_cleaned = ' '.join([word for word in user_input_cleaned.split() if word[0] != '#'])
+    # user_input_cleaned = user_input_cleaned.replace(r'[^\w\s]', '', case=False)
+    #user_input_cleaned = ' '.join([word for word in user_input_cleaned.split() if word not in (stop_words)])
+    user_input_cleaned = ' '.join([word for word in user_input_cleaned.split() if word.isalpha()])
+    return user_input_cleaned
 
 #Return the prediction based on the input and the model selected
-def prediction_input_user(user_input):
+def prediction_input_user(user_input_cleaned):
     #Transform the input into a numpy array
-    user_input = [user_input]
+    user_input = [user_input_cleaned]
     user_input = np.array(user_input)
     #Transform the array in the shape the model selected need:
-    if selected_NN == 'Simple NN' or selected_NN == 'Multi layers NN':
+    if selected_NN == 'CountVectorizer One layer Model' or selected_NN == 'CountVectorizer Multi layers Model':
         user_input = vectorizer.transform(user_input)
     else:
         user_input = tokenizer.texts_to_sequences(user_input)
@@ -147,21 +156,19 @@ def prediction_input_user(user_input):
     pred_name = CATEGORIES[np.argmax(prediction)]
     return pred_name
 
+
 #Design part:
 
-#Plot the model selected
-model = get_model(selected_NN)
+#Plot the model selected and the description:
+model, description, history = get_model(selected_NN)
 tf.keras.utils.plot_model(model, to_file='/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', show_shapes=True, show_layer_names=True)
 st.sidebar.write('Summary of the model:')
 st.sidebar.image('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', use_column_width = True)
 
 #Assignt the description of the model selected
-description = model_description(selected_NN)
 st.sidebar.write('Model description:', description)
 
 #Accuracy and loss plots:
-#Get the history
-history = get_history(selected_NN)
 #Initiate an array of range of number of epochs
 test = np.arange(1, len(history['accuracy'])+1)
 
@@ -196,7 +203,7 @@ X_train, X_test = set_training_tests(selected_NN)
 prediction = model.predict(X_test)
 #Get one for the highest prediction, else 0:
 for i in range(0,len(prediction)):
-    for y in range(0,5):
+    for y in range(0,2):
         if prediction[i][y] == max(prediction[i]):
             prediction[i][y] = 1
         else:
@@ -215,7 +222,7 @@ st.pyplot()
 
 #Prediction of user inputted data:
 user_input = st.text_input("Challenge the model, input your own tweet!", 'Try it yourself :)')
-pred_name = prediction_input_user(user_input)
+pred_name = prediction_input_user(clean_user_input(user_input))
 st.write("The model think that it is:", pred_name)
 
 #Credit and social link:s
@@ -237,3 +244,4 @@ if Others_Pred:
     Predictions_All['Prediction'] = Models_Prediction
     #Output the dataframe
     st.write('What does the others think 🤔', Predictions_All)
+    st.write('Cleaned', clean_user_input(user_input))
