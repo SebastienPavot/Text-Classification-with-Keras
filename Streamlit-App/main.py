@@ -44,9 +44,8 @@ The original data: Covid-19 tweets related
 st.write('Shape of train dataset:', train.shape)
 st.write('Shape of test set:', test.shape)
 
-#Select the model=
-selected_NN = st.sidebar.selectbox("Select the Neural Network", ('CountVectorizer One layer Model', 'CountVectorizer Multi layers Model', 'Embedding One layer Model', 'Embedding Multi layers Model', 
-                                    'Embedding Glove One layer Model', 'Embedding Glove Multi layers Model', 'Convolutional Model', 'Convolutional Glove Model'))
+st.sidebar.write('See the model performances or pick one to have more details and play with it:')
+models_details = st.sidebar.checkbox('Focus on a model',False)
 
 #Get the values of the input
 train_text = train.OriginalTweet.values
@@ -68,7 +67,6 @@ models_name = ['CountVectorizer One layer Model', 'CountVectorizer Multi layers 
                                     'Embedding Glove One layer Model', 'Embedding Glove Multi layers Model', 'Convolutional Model', 'Convolutional Glove Model']
 
 #Functions part:
-
 #Get the training and test sets in the shape of the models needs:
 def set_training_tests(selected_NN):
     #Input data regarding the model selected
@@ -159,89 +157,171 @@ def prediction_input_user(user_input_cleaned):
 
 #Design part:
 
-#Plot the model selected and the description:
-model, description, history = get_model(selected_NN)
-tf.keras.utils.plot_model(model, to_file='/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', show_shapes=True, show_layer_names=True)
-st.sidebar.write('Summary of the model:')
-st.sidebar.image('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', use_column_width = True)
+#If model details:
+if models_details:
 
-#Assignt the description of the model selected
-st.sidebar.write('Model description:', description)
+    #Select the model=
+    selected_NN = st.sidebar.selectbox("Select the Neural Network", ('CountVectorizer One layer Model', 'CountVectorizer Multi layers Model', 'Embedding One layer Model', 'Embedding Multi layers Model', 
+                                    'Embedding Glove One layer Model', 'Embedding Glove Multi layers Model', 'Convolutional Model', 'Convolutional Glove Model'))
+    #Plot the model selected and the description:
+    model, description, history = get_model(selected_NN)
+    tf.keras.utils.plot_model(model, to_file='/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', show_shapes=True, show_layer_names=True)
+    st.sidebar.write('Summary of the model:')
+    st.sidebar.image('/Users/spavot/Documents/Perso/Text classification & Visualization/Models/Plot/model_plot.png', use_column_width = True)
 
-#Accuracy and loss plots:
-#Initiate an array of range of number of epochs
-test = np.arange(1, len(history['accuracy'])+1)
+    #Assignt the description of the model selected
+    st.sidebar.write('Model description:', description)
 
-#Loss plot
-fig = go.Figure()
-fig.add_trace(go.Scatter(name = 'Training set', x = test, y = history['loss']))
-fig.add_trace(go.Scatter(name = 'Test set', x = test, y = history['val_loss']))
-fig.update_layout(
-    title="Training & Validation loss evolution",
+    #Accuracy and loss plots:
+    #Initiate an array of range of number of epochs
+    test = np.arange(1, len(history['accuracy'])+1)
+
+    #Loss plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(name = 'Training set', x = test, y = history['loss']))
+    fig.add_trace(go.Scatter(name = 'Test set', x = test, y = history['val_loss']))
+    fig.update_layout(
+        title="Training & Validation loss evolution",
+        xaxis_title="Epochs",
+        yaxis_title="Loss",
+        legend_title="Train & Test sets performance",
+        width = 1250)
+    st.plotly_chart(fig)
+
+    # Accuracy plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(name = 'Training set', x = test, y = history['accuracy']))
+    fig.add_trace(go.Scatter(name = 'Test set', x = test, y = history['val_accuracy']))
+    fig.update_layout(
+        title="Training & Validation accuracy evolution",
+        xaxis_title="Epochs",
+        yaxis_title="Accuracy",
+        legend_title="Train & Test sets performance",
+        width = 1250)
+    st.plotly_chart(fig)
+
+    #Confusion matrix plot:
+    #Get X_train, X_test
+    X_train, X_test = set_training_tests(selected_NN)
+    #Get the prediction of the model on the test set:
+    prediction = model.predict(X_test)
+    #Get one for the highest prediction, else 0:
+    for i in range(0,len(prediction)):
+        for y in range(0,2):
+            if prediction[i][y] == max(prediction[i]):
+                prediction[i][y] = 1
+            else:
+                prediction[i][y] = 0
+
+    #Compute the confusion matrix:
+    conf_mat = confusion_matrix(y_test.argmax(axis=1), prediction.argmax(axis=1))
+    #Plot it:
+    plt.figure(figsize=(25,7))
+    sns.heatmap(conf_mat, annot=True, fmt='d',
+                xticklabels=CATEGORIES, yticklabels=CATEGORIES)
+    plt.ylabel('Actual', fontsize=15)
+    plt.xlabel('Predicted', fontsize=15)
+    plt.title('Confusion matrix of the predictions on the test set:', fontsize=20)
+    st.pyplot()
+
+    #Prediction of user inputted data:
+    user_input = st.text_input("Challenge the model, input your own tweet!", 'Try it yourself :)')
+    pred_name = prediction_input_user(clean_user_input(user_input))
+    st.write("The model think that it is:", pred_name)
+
+    #Credit and social link:s
+    #Allow the possibility to see predictions of the others models:
+    Others_Pred =  st.checkbox('See what other models think:')
+
+    #If the checkbox is ticked:
+    if Others_Pred:
+        Model_Name = []
+        Models_Prediction = []
+        #For each model, we predct using the prediction function we created before and append the prediction / model name to an array
+        for i in models_name:
+            Model_Name.append(i)
+            Models_Prediction.append(prediction_input_user(user_input))
+        #Transform the arrays into dataframe
+        Predictions_All = pd.DataFrame(Model_Name, columns=['Model Name'])
+        Predictions_All['Prediction'] = Models_Prediction
+        #Output the dataframe
+        st.write('What does the others think 🤔', Predictions_All)
+        st.write('Cleaned', clean_user_input(user_input))
+
+else:
+    st.sidebar.write('All the models:')
+    models_name_df = pd.DataFrame(models_name, columns = ['Models'])
+    st.sidebar.table(models_name_df)
+
+    list_history = ['/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_simple_count.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_multi_count.npy', \
+                    '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_simple_embed.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_multi_Embed.npy', \
+                    '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_simple_glove.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_Multi_glove.npy', \
+                    '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_Conv.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Models/History/history_Conv_glove.npy'] 
+
+    fig = go.Figure()
+
+    for i,y in zip(list_history, models_name):
+        history = np.load(i, allow_pickle = 'TRUE').item()
+        test = np.arange(1, len(history['accuracy'])+1)
+        fig.add_trace(go.Scatter(name = y, x = test, y = history['loss']))
+    
+    fig.update_layout(
+    title="Training loss evolution",
     xaxis_title="Epochs",
     yaxis_title="Loss",
-    legend_title="Train & Test sets performance",
-    width = 1250)
-st.plotly_chart(fig)
+    legend_title="Training set performance",
+        width = 1250)
+    st.plotly_chart(fig)
 
-# Accuracy plot
-fig = go.Figure()
-fig.add_trace(go.Scatter(name = 'Training set', x = test, y = history['accuracy']))
-fig.add_trace(go.Scatter(name = 'Test set', x = test, y = history['val_accuracy']))
-fig.update_layout(
-    title="Training & Validation accuracy evolution",
+    fig = go.Figure()
+
+    for i,y in zip(list_history, models_name):
+        history = np.load(i, allow_pickle = 'TRUE').item()
+        test = np.arange(1, len(history['accuracy'])+1)
+        fig.add_trace(go.Scatter(name = y, x = test, y = history['val_loss']))
+    
+    fig.update_layout(
+    title="Validation loss evolution",
+    xaxis_title="Epochs",
+    yaxis_title="Loss",
+    legend_title="Test set performance",
+        width = 1250)
+    st.plotly_chart(fig)
+
+    fig = go.Figure()
+
+    for i,y in zip(list_history, models_name):
+        history = np.load(i, allow_pickle = 'TRUE').item()
+        test = np.arange(1, len(history['accuracy'])+1)
+        fig.add_trace(go.Scatter(name = y, x = test, y = history['accuracy']))
+    
+    fig.update_layout(
+    title="Training accuracy evolution",
     xaxis_title="Epochs",
     yaxis_title="Accuracy",
-    legend_title="Train & Test sets performance",
-    width = 1250)
-st.plotly_chart(fig)
+    legend_title="Training set performance",
+        width = 1250)
+    st.plotly_chart(fig)
 
-#Confusion matrix plot:
-#Get X_train, X_test
-X_train, X_test = set_training_tests(selected_NN)
-#Get the prediction of the model on the test set:
-prediction = model.predict(X_test)
-#Get one for the highest prediction, else 0:
-for i in range(0,len(prediction)):
-    for y in range(0,2):
-        if prediction[i][y] == max(prediction[i]):
-            prediction[i][y] = 1
-        else:
-            prediction[i][y] = 0
+    fig = go.Figure()
 
-#Compute the confusion matrix:
-conf_mat = confusion_matrix(y_test.argmax(axis=1), prediction.argmax(axis=1))
-#Plot it:
-plt.figure(figsize=(25,7))
-sns.heatmap(conf_mat, annot=True, fmt='d',
-            xticklabels=CATEGORIES, yticklabels=CATEGORIES)
-plt.ylabel('Actual', fontsize=15)
-plt.xlabel('Predicted', fontsize=15)
-plt.title('Confusion matrix of the predictions on the test set:', fontsize=20)
-st.pyplot()
+    for i,y in zip(list_history, models_name):
+        history = np.load(i, allow_pickle = 'TRUE').item()
+        test = np.arange(1, len(history['accuracy'])+1)
+        fig.add_trace(go.Scatter(name = y, x = test, y = history['val_accuracy']))
+    
+    fig.update_layout(
+    title="Validation accuracy evolution",
+    xaxis_title="Epochs",
+    yaxis_title="Accuracy",
+    legend_title="Test set performance",
+        width = 1250)
+    st.plotly_chart(fig)
 
-#Prediction of user inputted data:
-user_input = st.text_input("Challenge the model, input your own tweet!", 'Try it yourself :)')
-pred_name = prediction_input_user(clean_user_input(user_input))
-st.write("The model think that it is:", pred_name)
 
-#Credit and social link:s
+
+
+
+
+
 st.sidebar.write('Made by Sébastien PAVOT: https://github.com/SebastienPavot')
-
-#Allow the possibility to see predictions of the others models:
-Others_Pred =  st.checkbox('See what other models think:')
-
-#If the checkbox is ticked:
-if Others_Pred:
-    Model_Name = []
-    Models_Prediction = []
-    #For each model, we predct using the prediction function we created before and append the prediction / model name to an array
-    for i in models_name:
-        Model_Name.append(i)
-        Models_Prediction.append(prediction_input_user(user_input))
-    #Transform the arrays into dataframe
-    Predictions_All = pd.DataFrame(Model_Name, columns=['Model Name'])
-    Predictions_All['Prediction'] = Models_Prediction
-    #Output the dataframe
-    st.write('What does the others think 🤔', Predictions_All)
-    st.write('Cleaned', clean_user_input(user_input))
