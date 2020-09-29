@@ -6,4 +6,4 @@ Using Python, Keras library and Streamlit, the goal was to analyze tweets relate
 
 
 
-*Note: Models can be a lot improved and preprocessing too, it was a learning based approach to understand better deep learning models and analyze which type work the best for text classification.
+*Note: Models can be a lot improved and preprocessing too, it was a learning based approach to understand better deep learning models and analyze which type work the best for text classification.*
