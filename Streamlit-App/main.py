@@ -232,6 +232,7 @@ if models_details:
         Predictions_All['Prediction'] = Models_Prediction
         #Output the dataframe
         st.write('What does the others think 🤔', Predictions_All)
+
 #If we want to see at overall level
 else:
     #First first all the models into a dataframe in the side bar
