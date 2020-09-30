@@ -35,14 +35,13 @@ test = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualiz
 #Title
 st.title('Text classification with Keras')
 #Overview of the dataset:
-st.write("""
-The original data: Covid-19 tweets related
-""")
+st.header("The original data: Covid-19 tweets related")
 #Shape and head:
 st.write('Shape of train dataset:', train.shape)
 st.write('Shape of test set:', test.shape)
+st.markdown('**Target options:** *Negative / Neutral / Positive*')
 #Options to either see at a model or overall level
-st.sidebar.write('See the model performances or pick one to have more details and play with it:')
+st.sidebar.subheader('See the model performances or pick one to have more details and play with it:')
 models_details = st.sidebar.checkbox('Focus on a model',False)
 #Get the values of the input
 train_text = train.OriginalTweet.values
