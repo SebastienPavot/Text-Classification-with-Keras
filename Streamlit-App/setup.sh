@@ -1,4 +1,5 @@
 mkdir -p ~/.streamlit/
+
 echo "\
 [general]\n\
 email = \"sebastien.pavot@ieseg.fr\"\n\

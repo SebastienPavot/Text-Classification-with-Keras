@@ -30,8 +30,8 @@ st.beta_set_page_config(
 	page_icon="😷",  # String, anything supported by st.image, or None.
 )
 #Data importation
-train = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Data/train_cleaned.csv')
-test = pd.read_csv('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Data/test_cleaned.csv')
+train = pd.read_csv('https://raw.githubusercontent.com/SebastienPavot/Text-Classification-with-Keras/master/Streamlit-App/Data/train_cleaned.csv')
+test = pd.read_csv('https://raw.githubusercontent.com/SebastienPavot/Text-Classification-with-Keras/master/Streamlit-App/Data/test_cleaned.csv')
 #Title
 st.title('Text classification with Keras')
 #Overview of the dataset:
@@ -83,37 +83,37 @@ def set_training_tests(selected_NN):
 #Get the model selected, history related and the description:
 def get_model(selected_NN):
     if selected_NN == 'CountVectorizer One layer Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/Simple_model_Count.h5')
+        model = tf.keras.models.load_model('Simple_model_Count.h5')
         description = 'One layer model using CountVectorizer to encode the text.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_simple_count.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_simple_count.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'CountVectorizer Multi layers Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/model_multi_count.h5')
+        model = tf.keras.models.load_model('model_multi_count.h5')
         description = 'Multi layers model using CountVectorizer to encode the text.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_multi_count.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_multi_count.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'Embedding One layer Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/model_simple_embed.h5')
+        model = tf.keras.models.load_model('NN_Models/model_simple_embed.h5')
         description = 'One layer model using an embedding layer, tokenizer and pad sequences from Keras.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_simple_embed.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_simple_embed.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'Embedding Multi layers Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/multi_model_Embed.h5')
+        model = tf.keras.models.load_model('multi_model_Embed.h5')
         description = 'Multi layers model using an embedding layer, tokenizer and pad sequences from Keras.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_multi_Embed.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_multi_Embed.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'Embedding Glove One layer Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/model_simple_glove.h5')
+        model = tf.keras.models.load_model('model_simple_glove.h5')
         description = 'One layer model using an embedding layer with Glove dictionnary as weights, tokenizer and pad sequences from Keras.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_simple_glove.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_simple_glove.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'Embedding Glove Multi layers Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/model_multi_glove.h5')
+        model = tf.keras.models.load_model('model_multi_glove.h5')
         description = 'Multi layers model using an embedding layer with Glove dictionnary as weights, tokenizer and pad sequences from Keras.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_Multi_glove.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_Multi_glove.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'Convolutional Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/model_Conv.h5')
+        model = tf.keras.models.load_model('NN_Models/model_Conv.h5')
         description = 'Convolutional model using embedding layer and convolutional layer.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_Conv.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_Conv.npy', allow_pickle = 'TRUE').item()
     elif selected_NN == 'Convolutional Glove Model':
-        model = tf.keras.models.load_model('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/NN_Models/model_Conv_glove.h5')
+        model = tf.keras.models.load_model('model_Conv_glove.h5')
         description = 'Convolutional model using embedding layer with Glove dictionnary as weights and convolutional layer.'
-        history = np.load('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_Conv_glove.npy', allow_pickle = 'TRUE').item()
+        history = np.load('history_Conv_glove.npy', allow_pickle = 'TRUE').item()
     return model, description, history
 
 #Function to clean the user input to make it as the model learned
@@ -154,9 +154,9 @@ if models_details:
                                     'Embedding Glove One layer Model', 'Embedding Glove Multi layers Model', 'Convolutional Model', 'Convolutional Glove Model'))
     #Plot the model selected and the description:
     model, description, history = get_model(selected_NN)
-    tf.keras.utils.plot_model(model, to_file='/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/Plot/model_plot.png', show_shapes=True, show_layer_names=True)
+    tf.keras.utils.plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
     st.sidebar.write('Summary of the model:')
-    st.sidebar.image('/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/Plot/model_plot.png', use_column_width = True)
+    st.sidebar.image('model_plot.png', use_column_width = True)
     #Assignt the description of the model selected
     st.sidebar.write('Model description:', description)
     #Accuracy and loss plots:
@@ -240,10 +240,10 @@ else:
     st.sidebar.table(models_name_df)
 
     #Initate an array to iterate over the models history paths to get it
-    list_history = ['/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_simple_count.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_multi_count.npy', \
-                    '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_simple_embed.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_multi_Embed.npy', \
-                    '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_simple_glove.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_Multi_glove.npy', \
-                    '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_Conv.npy', '/Users/spavot/Documents/Perso/Text classification & Visualization/Streamlit-App/Models/History/history_Conv_glove.npy'] 
+    list_history = ['history_simple_count.npy', 'history_multi_count.npy', \
+                    'history_simple_embed.npy', 'history_multi_Embed.npy', \
+                    'history_simple_glove.npy', 'history_Multi_glove.npy', \
+                    'history_Conv.npy', 'history_Conv_glove.npy'] 
 
     #Initiate a plotly figure
     fig = go.Figure()
